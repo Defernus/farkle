@@ -126,7 +126,7 @@ fn draw_combination_selector(
         let x = 10.0 + (i as f32 * 60.0);
         let y = 250.0;
 
-        draw_dice(*result, x, y, selected_dice.contains(&i));
+        draw_dice(*result, x, y, selected_dice.contains(&i), i + 1);
     }
 
     if is_key_released(KeyCode::Escape) {
@@ -161,10 +161,11 @@ fn draw_combination_selector(
     true
 }
 
-fn draw_dice(result: RollResult, x: f32, y: f32, selected: bool) {
+fn draw_dice(result: RollResult, x: f32, y: f32, selected: bool, key: usize) {
     let size = 50.0;
     let color = if selected { RED } else { BLACK };
 
     draw_rectangle(x, y, size, size, color);
     draw_text(&format!("{}", *result), x + 20.0, y + 30.0, 30.0, WHITE);
+    draw_text(&format!("{}", key), x + 22.0, y + 70.0, 20.0, BLACK);
 }
