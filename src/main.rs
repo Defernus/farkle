@@ -62,11 +62,11 @@ fn draw_turn_score(turn_score: &[u32]) {
         return;
     }
 
-    draw_text("Turn score:", 400.0, 100.0, 30.0, BLACK);
+    draw_text("Turn score:", 450.0, 100.0, 30.0, BLACK);
     for (i, score) in turn_score.iter().enumerate() {
         draw_text(
             &format!("{score}"),
-            400.0,
+            450.0,
             150.0 + (i as f32 * 50.0),
             30.0,
             BLACK,
@@ -120,17 +120,30 @@ fn draw_combination_selector(
     if can_use_selected {
         draw_text("Press SPACE to use selected dice", 10.0, 150.0, 30.0, BLACK);
     }
+    draw_text("Press ESC to give up", 10.0, 200.0, 30.0, BLACK);
 
     for (i, result) in roll_result.iter().enumerate() {
         let x = 10.0 + (i as f32 * 60.0);
-        let y = 200.0;
+        let y = 250.0;
 
         draw_dice(*result, x, y, selected_dice.contains(&i));
     }
 
+    if is_key_released(KeyCode::Escape) {
+        game.next_turn();
+        turn_score.clear();
+    }
+
     if can_use_selected && is_key_released(KeyCode::Space) {
+        let prev_player = game.get_current_player().id().to_string();
         let score = game.use_dice(selected_dice.clone()).unwrap();
-        turn_score.push(score);
+
+        // if player changed, clear turn score
+        if prev_player != game.get_current_player().id().to_string() {
+            turn_score.clear();
+        } else {
+            turn_score.push(score);
+        }
         selected_dice.clear();
         return true;
     }
