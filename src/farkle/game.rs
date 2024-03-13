@@ -12,9 +12,13 @@ impl FarkleGame {
         }
 
         Ok(Self {
-            turn: Turn::new(&players[0]),
+            turn: Turn::new(players[0].dice(), 0),
             players,
         })
+    }
+
+    pub fn get_players(&self) -> &[Player] {
+        &self.players
     }
 
     pub fn get_current_player(&self) -> &Player {
@@ -42,7 +46,8 @@ impl FarkleGame {
             self.players[self.turn.player_index()].score += self.turn.total_score();
         }
 
-        self.turn = Turn::new(self.get_next_player());
+        let next_player_index = self.get_next_player_index();
+        self.turn = Turn::new(self.players[next_player_index].dice(), next_player_index);
     }
 
     pub fn is_waiting_for_roll(&self) -> bool {
@@ -55,7 +60,8 @@ impl FarkleGame {
         if self.turn.is_finished() {
             self.players[self.turn.player_index()].score += self.turn.total_score();
 
-            self.turn = Turn::new(self.get_next_player());
+            let next_player_index = self.get_next_player_index();
+            self.turn = Turn::new(self.players[next_player_index].dice(), next_player_index);
         }
 
         Ok(score)

@@ -16,10 +16,10 @@ pub(super) enum TurnState {
 }
 
 impl Turn {
-    pub fn new(player: &Player) -> Self {
+    pub fn new(dice: Vec<Dice>, player_index: usize) -> Self {
         Self {
-            dice: player.dice().clone(),
-            player_index: 0,
+            dice,
+            player_index,
             actions_score: Vec::new(),
             turn_state: TurnState::WaitForRoll,
         }

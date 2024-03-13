@@ -16,17 +16,21 @@ fn create_game() -> FarkleGame {
 async fn main() {
     let mut game = create_game();
     let mut selected_dice: Vec<usize> = vec![];
+    let mut turn_score: Vec<u32> = vec![];
 
     loop {
         clear_background(WHITE);
 
-        draw_state(&mut game, &mut selected_dice);
+        draw_state(&mut game, &mut selected_dice, &mut turn_score);
 
         next_frame().await
     }
 }
 
-fn draw_state(game: &mut FarkleGame, selected_dice: &mut Vec<usize>) {
+fn draw_state(game: &mut FarkleGame, selected_dice: &mut Vec<usize>, turn_score: &mut Vec<u32>) {
+    draw_score(game);
+    draw_turn_score(turn_score);
+
     draw_text(
         &format!("Current turn: {}", game.get_current_player().id()),
         10.0,
@@ -35,21 +39,57 @@ fn draw_state(game: &mut FarkleGame, selected_dice: &mut Vec<usize>) {
         BLACK,
     );
 
-    if draw_wait_for_roll(game) {
+    if draw_wait_for_roll(game, turn_score) {
         return;
     }
-    draw_combination_selector(game, selected_dice);
+    draw_combination_selector(game, selected_dice, turn_score);
 }
 
-fn draw_wait_for_roll(game: &mut FarkleGame) -> bool {
+fn draw_score(game: &FarkleGame) {
+    for (i, player) in game.get_players().iter().enumerate() {
+        draw_text(
+            &format!("{}: {}", player.id(), player.score()),
+            600.0,
+            100.0 + (i as f32 * 50.0),
+            30.0,
+            BLACK,
+        );
+    }
+}
+
+fn draw_turn_score(turn_score: &[u32]) {
+    if turn_score.is_empty() {
+        return;
+    }
+
+    draw_text("Turn score:", 400.0, 100.0, 30.0, BLACK);
+    for (i, score) in turn_score.iter().enumerate() {
+        draw_text(
+            &format!("{score}"),
+            400.0,
+            150.0 + (i as f32 * 50.0),
+            30.0,
+            BLACK,
+        );
+    }
+}
+
+fn draw_wait_for_roll(game: &mut FarkleGame, turn_score: &mut Vec<u32>) -> bool {
     if !game.is_waiting_for_roll() {
         return false;
     }
 
     draw_text("Press SPACE to roll", 10.0, 100.0, 30.0, BLACK);
+    draw_text("Press ESC to end turn", 10.0, 150.0, 30.0, BLACK);
 
     if is_key_released(KeyCode::Space) {
         game.roll().unwrap();
+        return true;
+    }
+
+    if is_key_released(KeyCode::Escape) {
+        game.next_turn();
+        turn_score.clear();
     }
 
     true
@@ -64,7 +104,11 @@ const KEY_CODES: [KeyCode; 6] = [
     KeyCode::Key6,
 ];
 
-fn draw_combination_selector(game: &mut FarkleGame, selected_dice: &mut Vec<usize>) -> bool {
+fn draw_combination_selector(
+    game: &mut FarkleGame,
+    selected_dice: &mut Vec<usize>,
+    turn_score: &mut Vec<u32>,
+) -> bool {
     let Some(roll_result) = game.get_last_roll_result() else {
         return false;
     };
@@ -85,7 +129,8 @@ fn draw_combination_selector(game: &mut FarkleGame, selected_dice: &mut Vec<usiz
     }
 
     if can_use_selected && is_key_released(KeyCode::Space) {
-        game.use_dice(selected_dice.clone()).unwrap();
+        let score = game.use_dice(selected_dice.clone()).unwrap();
+        turn_score.push(score);
         selected_dice.clear();
         return true;
     }
